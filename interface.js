@@ -1,5 +1,6 @@
 // Interface: liga a Lógica do tempo à tela (DOM, eventos, geolocalização). Sem testes.
 import { CIDADE_PADRAO, carregarPrevisao } from './tempo.js';
+import { urlDaBusca, escolherLocal } from './tempo.js';
 
 const secaoTempoAgora = document.getElementById('tempo-agora');
 const mensagem = document.getElementById('mensagem');
@@ -134,3 +135,27 @@ botaoLocalizacao.addEventListener('click', () => {
 
 document.getElementById('local').textContent = CIDADE_PADRAO.nome;
 mostrarLocal(CIDADE_PADRAO);
+
+async function buscarCidade(evento) {
+  evento.preventDefault();
+  const nome = evento.target.elements.cidade.value.trim();
+  if (!nome) return;
+
+  let local;
+  try {
+    const resposta = await fetch(urlDaBusca(nome));
+    if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+    local = escolherLocal(await resposta.json());
+  } catch {
+    // Os Dados de exemplo entram depois do ticket próprio; por ora, avisa e mantém o Local atual.
+    mostrarMensagem('Não foi possível buscar a cidade agora. Tente de novo.');
+    return;
+  }
+  if (!local) {
+    mostrarMensagem('Cidade não encontrada');
+    return;
+  }
+  mostrarLocal(local);
+}
+
+document.getElementById('busca').addEventListener('submit', buscarCidade);
