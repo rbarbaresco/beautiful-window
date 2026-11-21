@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beautiful Window</title>
+  <link rel="stylesheet" href="estilo.css">
+  <script type="module" src="interface.js"></script>
+</head>
+<body>
+  <main class="card">
+    <h1>Beautiful Window</h1>
+
+    <form id="busca" class="busca" role="search">
+      <label for="busca-cidade" class="oculto">Cidade</label>
+      <input id="busca-cidade" name="cidade" type="search" placeholder="Buscar cidade…" autocomplete="off" required>
+      <button type="submit">Buscar</button>
+    </form>
+    <button id="usar-localizacao" type="button" class="localizacao">📍 Usar minha localização</button>
+
+    <p id="mensagem" class="mensagem" role="status" hidden></p>
+
+    <section id="tempo-agora" class="tempo-agora" aria-labelledby="local" aria-busy="true">
+      <h2 id="local">São Paulo, São Paulo, Brasil</h2>
+      <p class="carregando">carregando…</p>
+    </section>
+
+    <section class="previsao-diaria" aria-label="Previsão diária">
+      <ol id="previsao-diaria"></ol>
+    </section>
+  </main>
+</body>
+</html>
