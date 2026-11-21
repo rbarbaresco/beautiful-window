@@ -41,6 +41,29 @@ function mostrarTempoAgora(local, tempoAgora) {
   secaoTempoAgora.setAttribute('aria-busy', 'false');
 }
 
+function mostrarPrevisaoDiaria(previsaoDiaria) {
+  const lista = document.getElementById('previsao-diaria');
+  lista.replaceChildren(
+    ...previsaoDiaria.map((dia) => {
+      const item = document.createElement('li');
+      item.className = 'dia';
+      item.innerHTML = `
+        <p class="dia-da-semana"></p>
+        <p class="emoji" aria-hidden="true"></p>
+        <p class="condicao"></p>
+        <p class="maxima-minima"><span class="maxima"></span> <span class="minima"></span></p>
+        <p class="chance-de-chuva"></p>`;
+      item.querySelector('.dia-da-semana').textContent = dia.diaDaSemana;
+      item.querySelector('.emoji').textContent = dia.condicao.emoji;
+      item.querySelector('.condicao').textContent = dia.condicao.texto;
+      item.querySelector('.maxima').textContent = `${dia.maxima}°`;
+      item.querySelector('.minima').textContent = `${dia.minima}°`;
+      item.querySelector('.chance-de-chuva').textContent = `💧 ${dia.chanceDeChuva}%`;
+      return item;
+    }),
+  );
+}
+
 function mostrarMensagem(texto) {
   mensagem.textContent = texto;
   mensagem.hidden = false;
@@ -56,11 +79,58 @@ async function mostrarLocal(local) {
   const { origem, tela } = await carregarPrevisao(local, fetch);
   const exemplo = origem === 'dados de exemplo';
   // Os Dados de exemplo são de São Paulo: mostrar o nome do Local pedido seria enganar.
-  const { tempoAgora } = tela;
+  const { tempoAgora, previsaoDiaria } = tela;
   mostrarTempoAgora(exemplo ? CIDADE_PADRAO : local, tempoAgora);
+  mostrarPrevisaoDiaria(previsaoDiaria);
   mensagem.hidden = true;
   mostrarAvisoDeDadosDeExemplo(exemplo);
 }
+
+// Sua localização: pede a posição com limite de 5 s (o nosso, porque o `timeout` da API
+// não conta o tempo do pop-up de permissão). Falha ou demora mantêm o Local atual.
+const LIMITE_LOCALIZACAO_MS = 5000;
+const botaoLocalizacao = document.getElementById('usar-localizacao');
+
+botaoLocalizacao.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    mostrarMensagem('Este navegador não informa Sua localização. Mantivemos o Local atual.');
+    return;
+  }
+  botaoLocalizacao.disabled = true;
+  let respondeu = false;
+  const terminar = () => {
+    respondeu = true;
+    clearTimeout(limite);
+    botaoLocalizacao.disabled = false;
+  };
+  const limite = setTimeout(() => {
+    if (respondeu) return;
+    terminar();
+    mostrarMensagem('Sua localização não respondeu em 5 s. Mantivemos o Local atual.');
+  }, LIMITE_LOCALIZACAO_MS);
+
+  navigator.geolocation.getCurrentPosition(
+    (posicao) => {
+      if (respondeu) return;
+      terminar();
+      mostrarLocal({
+        nome: '📍 Sua localização',
+        latitude: posicao.coords.latitude,
+        longitude: posicao.coords.longitude,
+      });
+    },
+    (erro) => {
+      if (respondeu) return;
+      terminar();
+      mostrarMensagem(
+        erro.code === erro.PERMISSION_DENIED
+          ? 'Sem permissão para usar Sua localização. Mantivemos o Local atual.'
+          : 'Não foi possível obter Sua localização. Mantivemos o Local atual.',
+      );
+    },
+    { timeout: LIMITE_LOCALIZACAO_MS, maximumAge: 60000 },
+  );
+});
 
 document.getElementById('local').textContent = CIDADE_PADRAO.nome;
 mostrarLocal(CIDADE_PADRAO);

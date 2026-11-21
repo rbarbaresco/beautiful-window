@@ -67,7 +67,22 @@ export function montarTela(resposta) {
       vento: Math.round(agora.wind_speed_10m),
       umidade: Math.round(agora.relative_humidity_2m),
     },
+    previsaoDiaria: resposta.daily.time.map((data, i) => ({
+      diaDaSemana: diaDaSemana(data),
+      maxima: Math.round(resposta.daily.temperature_2m_max[i]),
+      minima: Math.round(resposta.daily.temperature_2m_min[i]),
+      condicao: descreverCondicao(resposta.daily.weather_code[i]),
+      chanceDeChuva: resposta.daily.precipitation_probability_max[i],
+    })),
   };
+}
+
+// `daily.time` vem como "AAAA-MM-DD" já no fuso do Local (timezone=auto). Lido e formatado
+// em UTC, o dia não escorrega para o fuso do navegador.
+const FORMATO_DIA_DA_SEMANA = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' });
+
+function diaDaSemana(data) {
+  return FORMATO_DIA_DA_SEMANA.format(new Date(`${data}T00:00:00Z`));
 }
 
 // Devolve { origem, tela }. Falha de rede, resposta não-OK ou estouro do `limite` (ms)
