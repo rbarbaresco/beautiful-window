@@ -64,6 +64,13 @@ test('montar tela arredonda o Tempo agora para o inteiro mais próximo, com .5 p
       wind_speed_10m: 12.5,
       weather_code: 0,
     },
+    daily: {
+      time: [],
+      weather_code: [],
+      temperature_2m_max: [],
+      temperature_2m_min: [],
+      precipitation_probability_max: [],
+    },
   };
   assert.deepEqual(montarTela(resposta).tempoAgora, {
     temperatura: 19,
@@ -72,4 +79,48 @@ test('montar tela arredonda o Tempo agora para o inteiro mais próximo, com .5 p
     vento: 13,
     umidade: 65,
   });
+});
+
+test('montar tela a partir da resposta real de São Paulo produz a Previsão diária de 5 dias', () => {
+  const resposta = JSON.parse(
+    readFileSync(new URL('./fixtures/forecast-sao-paulo.json', import.meta.url), 'utf8'),
+  );
+  // Fixture: daily.time 2026-11-21 (um sábado) a 2026-11-25; weather_code 95, 95, 96, 95, 95;
+  // máximas 31.0, 30.4, 28.7, 30.6, 28.5; mínimas 20.3, 20.2, 21.7, 20.8, 20.2;
+  // precipitation_probability_max 94, 82, 98, 92, 100.
+  const trovoada = { texto: 'Trovoada', emoji: '⛈️' };
+  assert.deepEqual(montarTela(resposta).previsaoDiaria, [
+    { diaDaSemana: 'sábado', maxima: 31, minima: 20, condicao: trovoada, chanceDeChuva: 94 },
+    { diaDaSemana: 'domingo', maxima: 30, minima: 20, condicao: trovoada, chanceDeChuva: 82 },
+    {
+      diaDaSemana: 'segunda-feira',
+      maxima: 29,
+      minima: 22,
+      condicao: { texto: 'Trovoada com granizo', emoji: '⛈️' },
+      chanceDeChuva: 98,
+    },
+    { diaDaSemana: 'terça-feira', maxima: 31, minima: 21, condicao: trovoada, chanceDeChuva: 92 },
+    { diaDaSemana: 'quarta-feira', maxima: 29, minima: 20, condicao: trovoada, chanceDeChuva: 100 },
+  ]);
+});
+
+test('o dia da semana da Previsão diária segue o fuso do Local, não o do navegador', (t) => {
+  const resposta = JSON.parse(
+    readFileSync(new URL('./fixtures/forecast-sao-paulo.json', import.meta.url), 'utf8'),
+  );
+  const fusoOriginal = process.env.TZ;
+  t.after(() => {
+    if (fusoOriginal === undefined) delete process.env.TZ;
+    else process.env.TZ = fusoOriginal;
+  });
+  // 2026-11-21 é sábado em São Paulo, mesmo com o navegador em Honolulu (UTC-10) ou Tóquio (UTC+9).
+  for (const fusoDoNavegador of ['Pacific/Honolulu', 'Asia/Tokyo']) {
+    process.env.TZ = fusoDoNavegador;
+    const dias = montarTela(resposta).previsaoDiaria.map((dia) => dia.diaDaSemana);
+    assert.deepEqual(
+      dias,
+      ['sábado', 'domingo', 'segunda-feira', 'terça-feira', 'quarta-feira'],
+      `navegador em ${fusoDoNavegador}`,
+    );
+  }
 });
