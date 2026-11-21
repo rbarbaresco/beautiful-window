@@ -106,6 +106,23 @@ button {
   gap: 0.75rem;
 }
 
+.previsao-diaria .dia {
+  padding: 0.75rem 0.5rem;
+  border: 2px solid var(--borda);
+  border-radius: 0.9rem;
+  text-align: center;
+}
+
+.previsao-diaria .dia p { margin: 0; }
+.previsao-diaria .dia-da-semana { font-size: 0.9rem; font-weight: 700; }
+.previsao-diaria .dia-da-semana::first-letter { text-transform: uppercase; }
+.previsao-diaria .emoji { margin: 0.25rem 0; font-size: 2rem; line-height: 1.2; }
+.previsao-diaria .condicao { min-height: 2.4em; font-size: 0.85rem; color: var(--texto-suave); }
+.previsao-diaria .maxima-minima { margin-top: 0.35rem; font-size: 1.2rem; }
+.previsao-diaria .maxima { font-weight: 700; }
+.previsao-diaria .minima { color: var(--texto-suave); }
+.previsao-diaria .chance-de-chuva { margin-top: 0.25rem; font-size: 0.9rem; }
+
 .oculto {
   position: absolute;
   width: 1px;
