@@ -61,5 +61,51 @@ async function mostrarLocal(local) {
   }
 }
 
+// Sua localização: pede a posição com limite de 5 s (o nosso, porque o `timeout` da API
+// não conta o tempo do pop-up de permissão). Falha ou demora mantêm o Local atual.
+const LIMITE_LOCALIZACAO_MS = 5000;
+const botaoLocalizacao = document.getElementById('usar-localizacao');
+
+botaoLocalizacao.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    mostrarMensagem('Este navegador não informa Sua localização. Mantivemos o Local atual.');
+    return;
+  }
+  botaoLocalizacao.disabled = true;
+  let respondeu = false;
+  const terminar = () => {
+    respondeu = true;
+    clearTimeout(limite);
+    botaoLocalizacao.disabled = false;
+  };
+  const limite = setTimeout(() => {
+    if (respondeu) return;
+    terminar();
+    mostrarMensagem('Sua localização não respondeu em 5 s. Mantivemos o Local atual.');
+  }, LIMITE_LOCALIZACAO_MS);
+
+  navigator.geolocation.getCurrentPosition(
+    (posicao) => {
+      if (respondeu) return;
+      terminar();
+      mostrarLocal({
+        nome: '📍 Sua localização',
+        latitude: posicao.coords.latitude,
+        longitude: posicao.coords.longitude,
+      });
+    },
+    (erro) => {
+      if (respondeu) return;
+      terminar();
+      mostrarMensagem(
+        erro.code === erro.PERMISSION_DENIED
+          ? 'Sem permissão para usar Sua localização. Mantivemos o Local atual.'
+          : 'Não foi possível obter Sua localização. Mantivemos o Local atual.',
+      );
+    },
+    { timeout: LIMITE_LOCALIZACAO_MS, maximumAge: 60000 },
+  );
+});
+
 document.getElementById('local').textContent = CIDADE_PADRAO.nome;
 mostrarLocal(CIDADE_PADRAO);
