@@ -41,6 +41,29 @@ function mostrarTempoAgora(local, tempoAgora) {
   secaoTempoAgora.setAttribute('aria-busy', 'false');
 }
 
+function mostrarPrevisaoDiaria(previsaoDiaria) {
+  const lista = document.getElementById('previsao-diaria');
+  lista.replaceChildren(
+    ...previsaoDiaria.map((dia) => {
+      const item = document.createElement('li');
+      item.className = 'dia';
+      item.innerHTML = `
+        <p class="dia-da-semana"></p>
+        <p class="emoji" aria-hidden="true"></p>
+        <p class="condicao"></p>
+        <p class="maxima-minima"><span class="maxima"></span> <span class="minima"></span></p>
+        <p class="chance-de-chuva"></p>`;
+      item.querySelector('.dia-da-semana').textContent = dia.diaDaSemana;
+      item.querySelector('.emoji').textContent = dia.condicao.emoji;
+      item.querySelector('.condicao').textContent = dia.condicao.texto;
+      item.querySelector('.maxima').textContent = `${dia.maxima}°`;
+      item.querySelector('.minima').textContent = `${dia.minima}°`;
+      item.querySelector('.chance-de-chuva').textContent = `💧 ${dia.chanceDeChuva}%`;
+      return item;
+    }),
+  );
+}
+
 function mostrarMensagem(texto) {
   mensagem.textContent = texto;
   mensagem.hidden = false;
@@ -51,8 +74,9 @@ async function mostrarLocal(local) {
   try {
     const resposta = await fetch(urlDaPrevisao(local.latitude, local.longitude));
     if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
-    const { tempoAgora } = montarTela(await resposta.json());
+    const { tempoAgora, previsaoDiaria } = montarTela(await resposta.json());
     mostrarTempoAgora(local, tempoAgora);
+    mostrarPrevisaoDiaria(previsaoDiaria);
     mensagem.hidden = true;
   } catch {
     // Os Dados de exemplo entram num ticket próprio (Carregar previsão); por ora, só avisa.
