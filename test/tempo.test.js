@@ -1,7 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CIDADE_PADRAO, urlDaPrevisao, descreverCondicao, montarTela } from '../tempo.js';
+import {
+  CIDADE_PADRAO,
+  urlDaPrevisao,
+  descreverCondicao,
+  montarTela,
+  carregarPrevisao,
+} from '../tempo.js';
+
+const respostaSaoPaulo = JSON.parse(
+  readFileSync(new URL('./fixtures/forecast-sao-paulo.json', import.meta.url), 'utf8'),
+);
+
+function respostaHttp(status, corpo) {
+  return { ok: status >= 200 && status < 300, status, json: async () => corpo };
+}
 
 test('a Cidade padrão é São Paulo, nas coordenadas do geocoding da Open-Meteo', () => {
   assert.deepEqual(CIDADE_PADRAO, {
@@ -72,4 +86,46 @@ test('montar tela arredonda o Tempo agora para o inteiro mais próximo, com .5 p
     vento: 13,
     umidade: 65,
   });
+});
+
+test('carregar previsão com a API respondendo devolve a tela ao vivo do Local', async () => {
+  const urlsPedidas = [];
+  const fetchFalso = async (url) => {
+    urlsPedidas.push(url);
+    return respostaHttp(200, respostaSaoPaulo);
+  };
+  const { origem, tela } = await carregarPrevisao(CIDADE_PADRAO, fetchFalso, 1000);
+  assert.equal(origem, 'ao vivo');
+  assert.deepEqual(urlsPedidas, [urlDaPrevisao(-23.5475, -46.63611)]);
+  assert.equal(tela.tempoAgora.temperatura, 24);
+});
+
+// Os Dados de exemplo são a resposta real de São Paulo gravada antes da fala (a mesma da fixture).
+const telaDosDadosDeExemplo = montarTela(respostaSaoPaulo);
+const brasilia = { nome: 'Brasília, Distrito Federal, Brasil', latitude: -15.77972, longitude: -47.92972 };
+
+test('carregar previsão sem rede devolve os Dados de exemplo', async () => {
+  const fetchSemRede = async () => {
+    throw new TypeError('Failed to fetch');
+  };
+  const { origem, tela } = await carregarPrevisao(brasilia, fetchSemRede, 1000);
+  assert.equal(origem, 'dados de exemplo');
+  assert.deepEqual(tela, telaDosDadosDeExemplo);
+});
+
+test('carregar previsão com resposta de erro da API devolve os Dados de exemplo', async () => {
+  // O status decide, não o corpo: mesmo um corpo com formato de previsão não vale como dado ao vivo.
+  const respostaDeBrasilia = structuredClone(respostaSaoPaulo);
+  respostaDeBrasilia.current.temperature_2m = 31;
+  const fetchComErro = async () => respostaHttp(503, respostaDeBrasilia);
+  const { origem, tela } = await carregarPrevisao(brasilia, fetchComErro, 1000);
+  assert.equal(origem, 'dados de exemplo');
+  assert.deepEqual(tela, telaDosDadosDeExemplo);
+});
+
+test('carregar previsão que estoura o limite de tempo devolve os Dados de exemplo', async () => {
+  const fetchQueNuncaResponde = () => new Promise(() => {});
+  const { origem, tela } = await carregarPrevisao(brasilia, fetchQueNuncaResponde, 20);
+  assert.equal(origem, 'dados de exemplo');
+  assert.deepEqual(tela, telaDosDadosDeExemplo);
 });

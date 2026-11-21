@@ -1,4 +1,5 @@
 // Lógica do tempo: funções puras e o carregamento da previsão. Único seam de teste.
+import { DADOS_DE_EXEMPLO } from './dados-de-exemplo.js';
 
 export const CIDADE_PADRAO = {
   nome: 'São Paulo, São Paulo, Brasil',
@@ -67,4 +68,30 @@ export function montarTela(resposta) {
       umidade: Math.round(agora.relative_humidity_2m),
     },
   };
+}
+
+// Devolve { origem, tela }. Falha de rede, resposta não-OK ou estouro do `limite` (ms)
+// trocam os dados ao vivo pelos Dados de exemplo, com origem 'dados de exemplo'.
+export async function carregarPrevisao(local, fetch, limite = 6000) {
+  const controle = new AbortController();
+  let cronometro;
+  const estouro = new Promise((_, rejeitar) => {
+    cronometro = setTimeout(() => {
+      controle.abort();
+      rejeitar(new Error(`sem resposta em ${limite} ms`));
+    }, limite);
+  });
+  const aoVivo = async () => {
+    const url = urlDaPrevisao(local.latitude, local.longitude);
+    const resposta = await fetch(url, { signal: controle.signal });
+    if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+    return montarTela(await resposta.json());
+  };
+  try {
+    return { origem: 'ao vivo', tela: await Promise.race([aoVivo(), estouro]) };
+  } catch {
+    return { origem: 'dados de exemplo', tela: montarTela(DADOS_DE_EXEMPLO) };
+  } finally {
+    clearTimeout(cronometro);
+  }
 }
