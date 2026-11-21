@@ -68,3 +68,19 @@ export function montarTela(resposta) {
     },
   };
 }
+
+export function urlDaBusca(nome) {
+  return `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(nome)}&count=1&language=pt`;
+}
+
+// Devolve o Local da primeira cidade encontrada, ou null quando a busca não encontra nada
+// (a Open-Meteo omite a chave `results` nesse caso).
+export function escolherLocal(resposta) {
+  const cidade = resposta.results?.[0];
+  if (!cidade) return null;
+  return {
+    nome: [cidade.name, cidade.admin1, cidade.country].filter(Boolean).join(', '),
+    latitude: cidade.latitude,
+    longitude: cidade.longitude,
+  };
+}
