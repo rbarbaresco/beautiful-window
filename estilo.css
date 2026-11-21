@@ -1,0 +1,101 @@
+:root {
+  --texto: #1b2a3a;
+  --texto-suave: #4a5d70;
+  --destaque: #1f6feb;
+  --card: #ffffff;
+  --borda: #d5e0ea;
+  font-size: 20px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto);
+  background: linear-gradient(160deg, #e6f2ff 0%, #f7fbff 50%, #fff6e8 100%) fixed;
+}
+
+.card {
+  width: 100%;
+  max-width: 44rem;
+  background: var(--card);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  box-shadow: 0 0.75rem 2.5rem rgba(27, 42, 58, 0.12);
+}
+
+h1 { margin: 0 0 1rem; font-size: 1.6rem; }
+h2 { margin: 0 0 0.5rem; font-size: 1.4rem; }
+
+.busca { display: flex; gap: 0.5rem; }
+
+input, button {
+  font: inherit;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.6rem;
+  border: 2px solid var(--borda);
+}
+
+input { flex: 1; min-width: 0; color: var(--texto); }
+input:focus { outline: 3px solid var(--destaque); outline-offset: 1px; }
+
+button {
+  cursor: pointer;
+  background: var(--destaque);
+  border-color: var(--destaque);
+  color: #fff;
+  font-weight: 600;
+}
+
+.localizacao {
+  margin-top: 0.75rem;
+  width: 100%;
+  background: #fff;
+  color: var(--destaque);
+}
+
+.mensagem {
+  margin: 1rem 0 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.6rem;
+  background: #fff4d6;
+}
+
+.tempo-agora {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 2px solid var(--borda);
+}
+
+.carregando { margin: 0; font-size: 1.2rem; color: var(--texto-suave); }
+
+.previsao-diaria ol {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.75rem;
+}
+
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 30rem) {
+  :root { font-size: 18px; }
+  body { padding: 1rem; }
+  .card { padding: 1.25rem; }
+  .busca { flex-direction: column; }
+}
