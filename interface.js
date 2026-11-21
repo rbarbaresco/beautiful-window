@@ -1,5 +1,5 @@
 // Interface: liga a Lógica do tempo à tela (DOM, eventos, geolocalização). Sem testes.
-import { CIDADE_PADRAO, urlDaPrevisao, montarTela } from './tempo.js';
+import { CIDADE_PADRAO, carregarPrevisao } from './tempo.js';
 
 const secaoTempoAgora = document.getElementById('tempo-agora');
 const mensagem = document.getElementById('mensagem');
@@ -46,19 +46,20 @@ function mostrarMensagem(texto) {
   mensagem.hidden = false;
 }
 
+// Aviso fixo enquanto os Dados de exemplo estão na tela; some no próximo carregamento ao vivo.
+function mostrarAvisoDeDadosDeExemplo(visivel) {
+  document.getElementById('aviso-dados-de-exemplo').hidden = !visivel;
+}
+
 async function mostrarLocal(local) {
   mostrarCarregando();
-  try {
-    const resposta = await fetch(urlDaPrevisao(local.latitude, local.longitude));
-    if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
-    const { tempoAgora } = montarTela(await resposta.json());
-    mostrarTempoAgora(local, tempoAgora);
-    mensagem.hidden = true;
-  } catch {
-    // Os Dados de exemplo entram num ticket próprio (Carregar previsão); por ora, só avisa.
-    secaoTempoAgora.setAttribute('aria-busy', 'false');
-    mostrarMensagem('Não foi possível carregar o Tempo agora.');
-  }
+  const { origem, tela } = await carregarPrevisao(local, fetch);
+  const exemplo = origem === 'dados de exemplo';
+  // Os Dados de exemplo são de São Paulo: mostrar o nome do Local pedido seria enganar.
+  const { tempoAgora } = tela;
+  mostrarTempoAgora(exemplo ? CIDADE_PADRAO : local, tempoAgora);
+  mensagem.hidden = true;
+  mostrarAvisoDeDadosDeExemplo(exemplo);
 }
 
 document.getElementById('local').textContent = CIDADE_PADRAO.nome;

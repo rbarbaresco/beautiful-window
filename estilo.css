@@ -67,6 +67,17 @@ button {
   background: #fff4d6;
 }
 
+.aviso {
+  margin: 0 0 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0.6rem;
+  background: #ffe2b3;
+  border: 2px solid #e08a00;
+  color: #5a3300;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
 .tempo-agora {
   margin-top: 1.5rem;
   padding-top: 1.25rem;
